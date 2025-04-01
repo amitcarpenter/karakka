@@ -28,7 +28,7 @@ app.set('views', path.join(__dirname, 'src/views'));
 configureApp(app);
 
 app.get("/", (req, res) => {
-  return res.send("simple node js setup")
+  return res.send("krakka project here")
 });
 
 // const sslOptions = {

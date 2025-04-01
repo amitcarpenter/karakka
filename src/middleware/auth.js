@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { handleError } from "../utils/responseHandler.js";
 import express from "express";
 import dotenv from "dotenv";
-import { get_admin_data_by_id } from "../models/api/auth.js";
+import { get_admin_data_by_id, get_user_data_by_id } from "../models/api/auth.js";
 
 
 dotenv.config();
@@ -27,13 +27,13 @@ export const authenticateUser = async (req, res, next) => {
         } catch (err) {
             return handleError(res, 401, "Unauthorized: Invalid token");
         }
-        console.log(decodedToken.email, "Admin Connected");
+        console.log(decodedToken.email, "User Connected");
         console.log(decodedToken, "decocde token");
-        const [admin] = await get_admin_data_by_id(decodedToken.admin_id)
-        if (!admin) {
-            return handleError(res, 404, "Admin Not Found")
+        const [user] = await get_user_data_by_id(decodedToken.user_id)
+        if (!user) {
+            return handleError(res, 404, "User Not Found")
         }
-        req.admin = admin;
+        req.user = user;
         next();
     } catch (error) {
         return handleError(res, 500, error.message)

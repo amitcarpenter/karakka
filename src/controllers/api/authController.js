@@ -12,6 +12,16 @@ import Msg from '../../utils/message.js';
 import { sendEmail } from '../../services/send_email.js';
 import { handleError, handleSuccess, joiErrorHandle } from '../../utils/responseHandler.js';
 import { get_admin_data_by, get_admin_data_by_email, get_admin_data_by_id, update_admin_data, update_admin_data_by, update_admin_password, update_admin_profile } from '../../models/api/auth.js';
+import { insert_user_data } from '../../models/api/auth.js';
+import { get_user_by_token } from '../../models/api/auth.js';
+import { update_user_token_data } from '../../models/api/auth.js';
+import { get_user_data_by_email } from '../../models/api/auth.js';
+import { get_user_data_by_id } from '../../models/api/auth.js';
+import { update_user_profile } from '../../models/api/auth.js';
+import { update_user_data } from '../../models/api/auth.js';
+import { get_user_data_by } from '../../models/api/auth.js';
+import { update_user_data_by } from '../../models/api/auth.js';
+import { update_user_password } from '../../models/api/auth.js';
 
 
 
@@ -30,7 +40,85 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 
+
+
+export const generateVerificationLink = (token, baseUrl) => {
+    return `${baseUrl}/api/verify-email?token=${token}`;
+};
+
+
 //======================================= Auth ============================================
+export const register = async (req, res) => {
+    try {
+        const schema = Joi.object({
+            name: Joi.string().required(),
+            email: Joi.string().min(5).max(255).email({ tlds: { allow: false } }).lowercase().required(),
+            password: Joi.string().min(8).max(15).required()
+        });
+
+        const { error, value } = schema.validate(req.body);
+        if (error) return joiErrorHandle(res, error);
+
+        const { name, email, password } = value;
+
+        const [existingUser] = await get_user_data_by_email(email);
+        if (existingUser) {
+            return handleError(res, 400, Msg.EMAIL_ALREADY_EXIST);
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verifyToken = crypto.randomBytes(32).toString('hex');
+        const verifyTokenExpiry = new Date(Date.now() + 3600000);
+
+        const userId = await insert_user_data({ name, email, password: hashedPassword, show_password: password, verifyToken, verifyTokenExpiry });
+
+
+        if (!userId) {
+            return handleError(res, 500, Msg.REGISTRATION_FAILED);
+        }
+
+        const baseUrl = req.protocol + '://' + req.get('host');
+        const verificationLink = generateVerificationLink(verifyToken, baseUrl);
+        const emailTemplatePath = path.resolve(__dirname, "../../views/verifyAccount.ejs");
+        const emailHtml = await ejs.renderFile(emailTemplatePath, { verificationLink, image_logo });
+        const emailOptions = {
+            to: email,
+            subject: "Password Reset Request",
+            html: emailHtml,
+        };
+        await sendEmail(emailOptions);
+
+
+        return handleSuccess(res, 200, Msg.REGISTRATION_SUCCESSFUL)
+
+    } catch (error) {
+        console.error(error);
+        return handleError(res, 500, error.message);
+    }
+};
+
+
+export const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.query;
+        console.log(token)
+        if (typeof token !== 'string') {
+            return handleError(res, 400, "Invalid token.");
+        }
+        let time_now = new Date()
+
+        const [user] = await get_user_by_token(token, time_now)
+
+        if (!user) {
+            return res.render("sessionExpire.ejs")
+        }
+        const update_user = await update_user_token_data(user.user_id)
+        return res.render("successRegister.ejs")
+    } catch (error) {
+        console.error('Error in verifyEmail:', error);
+        return handleError(res, 500, error.message);
+    }
+};
 
 export const login = async (req, res) => {
     try {
@@ -41,18 +129,22 @@ export const login = async (req, res) => {
         });
         const result = schema.validate(req.body);
         if (result.error) return joiErrorHandle(res, result.error);
-        const [existingAdmin] = await get_admin_data_by_email(email);
+        const [existingUser] = await get_user_data_by_email(email);
+        if (!existingUser) {
+            console.log("here the user email ");
 
-        if (!existingAdmin) {
             return handleError(res, 400, Msg.INVALID_EMAIL_PASSWORD);
         }
-        const isPasswordValid = await bcrypt.compare(password, existingAdmin.password);
+        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
         if (!isPasswordValid) {
+            console.log("here password");
+
             return handleError(res, 400, Msg.INVALID_EMAIL_PASSWORD);
         }
-        const token = jwt.sign({ admin_id: existingAdmin.admin_id, email: existingAdmin.email }, JWT_SECRET, {
+        const token = jwt.sign({ user_id: existingUser.user_id, email: existingUser.email }, JWT_SECRET, {
             expiresIn: JWT_EXPIRY
         });
+
         return res.status(200).json({
             success: true,
             status: 200,
@@ -67,7 +159,7 @@ export const login = async (req, res) => {
 
 export const render_forgot_password_page = (req, res) => {
     try {
-        return res.render("resetPasswordAdmin.ejs");
+        return res.render("resetPassword.ejs");
     } catch (error) {
         return handleError(res, 500, error.message)
     }
@@ -81,21 +173,21 @@ export const forgot_password = async (req, res) => {
         const { error, value } = forgotPasswordSchema.validate(req.body);
         if (error) return joiErrorHandle(res, error);
         const { email } = value;
-        const [admin] = await get_admin_data_by_email(email);
-        if (!admin) {
-            return handleError(res, 404, Msg.ADMIN_NOT_FOUND);
+        const [user] = await get_user_data_by_email(email);
+        if (!user) {
+            return handleError(res, 404, Msg.USER_NOT_FOUND);
         }
 
-        if (admin.is_verified === false) {
+        if (user.is_verified === false) {
             return handleError(res, 400, Msg.VERIFY_EMAIL_FIRST);
         }
         const resetToken = crypto.randomBytes(32).toString("hex");
 
         const resetTokenExpiry = new Date(Date.now() + 3600000);
 
-        const update_admin_datad = await update_admin_data(resetToken, resetTokenExpiry, email)
+        const update_admin_datad = await update_user_data(resetToken, resetTokenExpiry, email)
 
-        const resetLink = `${req.protocol}://${req.get("host")}/admin/reset-password?token=${resetToken}`;
+        const resetLink = `${req.protocol}://${req.get("host")}/api/reset-password?token=${resetToken}`;
         const emailTemplatePath = path.resolve(__dirname, "../../views/forgotPassword.ejs");
         const emailHtml = await ejs.renderFile(emailTemplatePath, { resetLink, image_logo });
         const emailOptions = {
@@ -125,19 +217,21 @@ export const reset_password = async (req, res) => {
         if (error) return joiErrorHandle(res, error);
         const { token, newPassword } = value;
 
-        const [admin] = await get_admin_data_by(token)
-        if (!admin) {
+        const [user] = await get_user_data_by(token)
+        if (!user) {
             return handleError(res, 400, Msg.INVALID_EXPIRED_TOKEN);
         }
 
-        if (admin.show_password === newPassword) {
+        if (user.show_password === newPassword) {
             return handleError(res, 400, Msg.PASSWORD_CAN_NOT_SAME);
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        const update_result = await update_admin_data_by(hashedPassword, newPassword, admin.admin_id)
+        const update_result = await update_user_data_by(hashedPassword, newPassword, user.user_id)
+        console.log(update_result, "update result api ");
+
         return handleSuccess(res, 200, Msg.PASSWORD_RESET_SUCCESS);
 
     } catch (error) {
@@ -152,15 +246,16 @@ export const render_success_reset = (req, res) => {
 
 export const getProfile = async (req, res) => {
     try {
-        const adminReq = req.admin;
-        const [admin] = await get_admin_data_by_id(adminReq.admin_id)
-        if (!admin) {
-            return handleError(res, 404, Msg.ADMIN_NOT_FOUND);
+        const userReq = req.user;
+        const [user] = await get_user_data_by_id(userReq.user_id)
+        if (!user) {
+            return handleError(res, 404, Msg.USER_NOT_FOUND);
         }
-        if (admin.profile_image && !admin.profile_image.startsWith("http")) {
-            admin.profile_image = `${APP_URL}${admin.profile_image}`;
+        if (user.profile_image && !user.profile_image.startsWith("http")) {
+            user.profile_image = `${APP_URL}${user.profile_image}`;
         }
-        return handleSuccess(res, 200, Msg.ADMIN_PROFILE_FETCHED, admin);
+
+        return handleSuccess(res, 200, Msg.USER_PROFILE_FETCHED, user);
     } catch (error) {
         console.error("Error in getProfile:", error);
         return handleError(res, 500, error.message);
@@ -171,25 +266,21 @@ export const updateProfile = async (req, res) => {
     try {
         const updateProfileSchema = Joi.object({
             name: Joi.string().required(),
-            address: Joi.string().required(),
-            latitude: Joi.string().required(),
-            longitude: Joi.string().required(),
-            mobile_number: Joi.string().required(),
         });
 
         const { error, value } = updateProfileSchema.validate(req.body);
         if (error) return joiErrorHandle(res, error);
-        const { name, mobile_number, address, latitude, longitude } = value;
-        const adminReq = req.admin;
-        const [admin] = await get_admin_data_by_id(adminReq.admin_id)
-        if (!admin) {
-            return handleError(res, 404, Msg.ADMIN_NOT_FOUND);
+        const { name } = value;
+        const userReq = req.user;
+        const [user] = await get_user_data_by_id(userReq.user_id)
+        if (!user) {
+            return handleError(res, 404, Msg.USER_NOT_FOUND);
         }
-        let profile_image = admin.profile_image;
+        let profile_image = user.profile_image;
         if (req.file) {
             profile_image = req.file.filename;
         }
-        const update_profile = await update_admin_profile(name, profile_image, mobile_number, address, latitude, longitude, adminReq.admin_id)
+        const update_profile = await update_user_profile(name, profile_image, userReq.user_id)
 
         return handleSuccess(res, 200, "Profile updated successfully");
     } catch (error) {
@@ -210,24 +301,24 @@ export const changePassword = async (req, res) => {
         if (error) return joiErrorHandle(res, error);
 
 
-        const admin = req.admin;
-        if (!admin) {
-            return handleError(res, 404, Msg.ADMIN_NOT_FOUND);
+        const user = req.user;
+        if (!user) {
+            return handleError(res, 404, Msg.USER_NOT_FOUND);
         }
 
-        const isMatch = await bcrypt.compare(currentPassword, admin.password);
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
             return handleError(res, 400, Msg.CURRENT_PASSWORD_INCORRECT);
         }
 
-        if (admin.show_password === newPassword) {
+        if (user.show_password === newPassword) {
             return handleError(res, 400, Msg.PASSWORD_CAN_NOT_BE_SAME);
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
 
-        const update_admin = await update_admin_password(hashedPassword, newPassword, admin.email)
+        const update_admin = await update_user_password(hashedPassword, newPassword, user.email)
 
         return handleSuccess(res, 200, Msg.PASSWORD_CHANGED_SUCCESSFULLY);
     } catch (error) {

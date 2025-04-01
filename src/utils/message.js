@@ -4,7 +4,11 @@ const messages = {
 
     //--------------------------------------- Admin Messages-------------------------------
     ADMIN_NOT_FOUND: 'Admin Not Found',
+    USER_NOT_FOUND: 'User Not Found',
     INVALID_EMAIL_PASSWORD: 'Invalid email or password',
+    EMAIL_ALREADY_EXIST: 'Email Alraedy Exist',
+    REGISTRATION_FAILED: 'User Register Failed',
+    REGISTRATION_SUCCESSFUL: 'User Register Successfully',
     LOGIN_SUCCESSFUL: 'Login Successful',
     VERIFY_EMAIL_FIRST: 'Please Verify your email first',
     INVALID_EXPIRED_TOKEN: 'Invalid or expired token',
@@ -12,6 +16,7 @@ const messages = {
     PASSWORD_RESET_SUCCESS: 'Password reset successfully.',
     PASSWORD_RESET_FAILED: 'Failed to reset password.',
     ADMIN_PROFILE_FETCHED: 'Admin profile fetched successfully',
+    USER_PROFILE_FETCHED: 'User profile fetched successfully',
     CUREENT_NEW_REQUIERED: 'Current password and new password are required, and new password must be at least 8 characters long.',
     CURRENT_PASSWORD_INCORRECT: 'Current password is incorrect.',
     PASSWORD_CAN_NOT_BE_SAME: 'Password cannot be the same as the previous password.',

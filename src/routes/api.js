@@ -12,6 +12,8 @@ const router = express.Router();
 
 
 //==================================== AUTH ==============================
+router.post('/register', authController.register);
+router.get("/verify-email", authController.verifyEmail);
 router.post('/login', authController.login);
 router.get('/profile', authenticateUser, authController.getProfile);
 router.post('/forgot-password', authController.forgot_password);
