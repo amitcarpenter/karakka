@@ -21,14 +21,14 @@ export const get_admin_data_by_id = async (admin_id) => {
 };
 
 
-export const insert_user_data = async ({ name, email, password, show_password, verifyToken, verifyTokenExpiry }) => {
+export const insert_user_data = async ({ name, email, password, show_password, verifyToken, verifyTokenExpiry, mobile_number }) => {
     try {
         const query = `
-            INSERT INTO tbl_users (name, email, password, show_password, verify_token, verify_token_expiry)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO tbl_users (name, email, password, show_password, verify_token, verify_token_expiry, mobile_number)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
         `;
-        const result = await db.query(query, [name, email, password, show_password, verifyToken, verifyTokenExpiry]);
-        return result // Ensure returning the inserted ID
+        const result = await db.query(query, [name, email, password, show_password, verifyToken, verifyTokenExpiry, mobile_number]);
+        return result
     } catch (error) {
         console.error("Database Error:", error.message);
         throw new Error("Failed to insert user data.");
@@ -111,10 +111,10 @@ export const update_admin_profile = async (full_name, profile_image, mobile_numb
     }
 };
 
-export const update_user_profile = async (full_name, profile_image, user_id) => {
+export const update_user_profile = async (full_name, profile_image, mobile_number, user_id) => {
     try {
-        return await db.query(`UPDATE tbl_users SET name = ?, profile_image = ?  WHERE user_id = ?`,
-            [full_name, profile_image, user_id]);
+        return await db.query(`UPDATE tbl_users SET name = ?, profile_image = ?, mobile_number = ?  WHERE user_id = ?`,
+            [full_name, profile_image, mobile_number, user_id]);
     } catch (error) {
         console.error("Database Error:", error.message);
         throw new Error("Failed to update admin data");

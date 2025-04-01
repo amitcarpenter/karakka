@@ -15,6 +15,7 @@ const router = express.Router();
 router.post('/register', authController.register);
 router.get("/verify-email", authController.verifyEmail);
 router.post('/login', authController.login);
+router.post('/social-login', authController.social_login);
 router.get('/profile', authenticateUser, authController.getProfile);
 router.post('/forgot-password', authController.forgot_password);
 router.get('/reset-password', authController.render_forgot_password_page);
@@ -25,7 +26,8 @@ router.post('/update-profile', authenticateUser, uploadFile, authController.upda
 
 
 //==================================== Form Data ==============================
-router.post('/add-update-form-data', formControllers.add_update_form_data);
+router.post('/add-form-data', formControllers.add_form_data);
+router.post('/update-form-data', formControllers.update_form_data);
 router.get('/get-form-data', formControllers.get_form_data_api);
 
 

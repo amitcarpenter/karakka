@@ -24,9 +24,6 @@ import { update_user_data_by } from '../../models/api/auth.js';
 import { update_user_password } from '../../models/api/auth.js';
 
 
-
-
-
 const saltRounds = process.env.SALT_ROUNDS;
 const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRY = process.env.JWT_EXPIRY
@@ -52,6 +49,7 @@ export const register = async (req, res) => {
     try {
         const schema = Joi.object({
             name: Joi.string().required(),
+            mobile_number: Joi.string().required(),
             email: Joi.string().min(5).max(255).email({ tlds: { allow: false } }).lowercase().required(),
             password: Joi.string().min(8).max(15).required()
         });
@@ -59,7 +57,7 @@ export const register = async (req, res) => {
         const { error, value } = schema.validate(req.body);
         if (error) return joiErrorHandle(res, error);
 
-        const { name, email, password } = value;
+        const { name, email, password, mobile_number } = value;
 
         const [existingUser] = await get_user_data_by_email(email);
         if (existingUser) {
@@ -70,7 +68,7 @@ export const register = async (req, res) => {
         const verifyToken = crypto.randomBytes(32).toString('hex');
         const verifyTokenExpiry = new Date(Date.now() + 3600000);
 
-        const userId = await insert_user_data({ name, email, password: hashedPassword, show_password: password, verifyToken, verifyTokenExpiry });
+        const userId = await insert_user_data({ name, email, password: hashedPassword, show_password: password, verifyToken, verifyTokenExpiry, mobile_number });
 
 
         if (!userId) {
@@ -156,6 +154,55 @@ export const login = async (req, res) => {
         return handleError(res, 500, error.message);
     }
 };
+
+export const social_login = async (req, res) => {
+    try {
+        const { email, name } = req.body;
+        const schema = Joi.object({
+            email: Joi.string().min(5).max(255).email({ tlds: { allow: false } }).lowercase().required(),
+            name: Joi.string().required(),
+        });
+        const result = schema.validate(req.body);
+        if (result.error) return joiErrorHandle(res, result.error);
+
+        let hashedPassword = null;
+        let password = null;
+        let verifyToken = null;
+        let verifyTokenExpiry = null;
+        let mobile_number = null;
+
+        let token = null
+
+        const [existingUser] = await get_user_data_by_email(email);
+        if (!existingUser) {
+            const insert = await insert_user_data({ name, email, password: hashedPassword, show_password: password, verifyToken, verifyTokenExpiry, mobile_number });
+
+            console.log(insert.insertId, "new_user");
+
+            const [user] = await get_user_data_by_id(insert.insertId)
+
+            token = jwt.sign({ user_id: user.user_id, email: user.email }, JWT_SECRET, {
+                expiresIn: JWT_EXPIRY
+            });
+        } else {
+            token = jwt.sign({ user_id: existingUser.user_id, email: existingUser.email }, JWT_SECRET, {
+                expiresIn: JWT_EXPIRY
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            status: 200,
+            message: Msg.LOGIN_SUCCESSFUL,
+            token: token
+        })
+
+    } catch (error) {
+        console.error(error);
+        return handleError(res, 500, error.message);
+    }
+};
+
 
 export const render_forgot_password_page = (req, res) => {
     try {
@@ -266,11 +313,12 @@ export const updateProfile = async (req, res) => {
     try {
         const updateProfileSchema = Joi.object({
             name: Joi.string().required(),
+            mobile_number: Joi.string().required(),
         });
 
         const { error, value } = updateProfileSchema.validate(req.body);
         if (error) return joiErrorHandle(res, error);
-        const { name } = value;
+        const { name, mobile_number } = value;
         const userReq = req.user;
         const [user] = await get_user_data_by_id(userReq.user_id)
         if (!user) {
@@ -280,7 +328,7 @@ export const updateProfile = async (req, res) => {
         if (req.file) {
             profile_image = req.file.filename;
         }
-        const update_profile = await update_user_profile(name, profile_image, userReq.user_id)
+        const update_profile = await update_user_profile(name, profile_image, mobile_number, userReq.user_id)
 
         return handleSuccess(res, 200, "Profile updated successfully");
     } catch (error) {
