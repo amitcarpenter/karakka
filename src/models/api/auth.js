@@ -10,6 +10,8 @@ export const get_admin_data_by_email = async (email) => {
     }
 };
 
+
+
 export const get_admin_data_by_id = async (admin_id) => {
     try {
         return await db.query(`SELECT * FROM tbl_admin WHERE admin_id = ?`, [admin_id]);

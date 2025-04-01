@@ -32,7 +32,7 @@ dotenv.config();
 
 //======================================= Auth ============================================
 
-export const loginAdmin = async (req, res) => {
+export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const schema = Joi.object({
