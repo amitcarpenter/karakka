@@ -26,9 +26,10 @@ router.post('/update-profile', authenticateUser, uploadFile, authController.upda
 
 
 //==================================== Form Data ==============================
-router.post('/add-form-data', formControllers.add_form_data);
-router.post('/update-form-data', formControllers.update_form_data);
-router.get('/get-form-data', formControllers.get_form_data_api);
+router.post('/add-update-form-data', authenticateUser, uploadFile, formControllers.add_update_form_data);
+// router.post('/add-form-data', formControllers.add_form_data);
+// router.post('/update-form-data', formControllers.update_form_data);
+router.get('/get-form-data', authenticateUser, formControllers.get_form_data_api);
 
 
 

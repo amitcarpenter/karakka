@@ -1,6 +1,6 @@
 
 export const handleError = (res, statusCode, message) => {
-  return res.status(200).send({
+  return res.status(statusCode).send({
     success: false,
     status: statusCode,
     message: message
@@ -17,7 +17,7 @@ export const handleSuccess = (res, statusCode, message, ...data) => {
 };
 
 export const joiErrorHandle = (res, error) => {
-  return res.status(200).send({
+  return res.status(400).send({
     success: false,
     status: 400,
     message: error.details[0].message

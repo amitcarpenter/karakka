@@ -87,14 +87,13 @@ export const register = async (req, res) => {
         await sendEmail(emailOptions);
 
 
-        return handleSuccess(res, 200, Msg.REGISTRATION_SUCCESSFUL)
+        return handleSuccess(res, 200, Msg.USER_REGISTERED_SUCCESSFULLY(email))
 
     } catch (error) {
         console.error(error);
         return handleError(res, 500, error.message);
     }
 };
-
 
 export const verifyEmail = async (req, res) => {
     try {
@@ -147,7 +146,8 @@ export const login = async (req, res) => {
             success: true,
             status: 200,
             message: Msg.LOGIN_SUCCESSFUL,
-            token: token
+            token: token,
+            
         })
     } catch (error) {
         console.error(error);

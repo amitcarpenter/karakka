@@ -46,6 +46,7 @@ const messages = {
     CONTACT_US_DELETED: 'Contact Us Deleted Successfully',
     CONTACT_US_NOT_FOUND: 'Contact Us Not Found',
     PASSWORD_RESET_LINK_SENT: (email) => `Password reset link sent to your email (${email}).`,
+    USER_REGISTERED_SUCCESSFULLY: (lower_email) => `Verification link sent successfully to your email (${lower_email}). Please verify your account.`,
     USER_SUSPEND_UNSUSPENDED: (response_message) => `User ${response_message} Successfully`,
     SELLER_APPOROVE_REJECT: (response_message) => `Seller ${response_message} Successfully`,
 
