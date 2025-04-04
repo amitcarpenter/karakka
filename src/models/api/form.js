@@ -137,6 +137,17 @@ export const get_form_data_by_id = async (form_service_id) => {
     }
 };
 
+export const delete_form_data = async (user_id) => {
+    try {
+        const query = `DELETE FROM tbl_form_service  WHERE user_id = ? `;
+        const result = await db.query(query, [user_id]);
+        return result;
+    } catch (error) {
+        console.error("Database Error:", error.message);
+        throw new Error("Failed to update storage data.");
+    }
+};
+
 
 
 

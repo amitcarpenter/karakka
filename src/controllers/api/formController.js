@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import Msg from '../../utils/message.js';
 import { sendEmail } from '../../services/send_email.js';
 import { handleError, handleSuccess, joiErrorHandle } from '../../utils/responseHandler.js';
-import { get_form_data, get_form_data_by_user_id, insert_form_data, update_form_data_in_db } from '../../models/api/form.js';
+import { delete_form_data, get_form_data, get_form_data_by_user_id, insert_form_data, update_form_data_in_db } from '../../models/api/form.js';
 
 
 
@@ -57,10 +57,21 @@ export const add_update_form_data = async (req, res) => {
         }
 
         let response_message = is_draft ? 'Form Data Saved in Draft Successfully' : 'Form Data Submitted Successfully'
-        
+
+
+
+        const [form_data] = await get_form_data_by_user_id(user_id)
+
+        if (!form_data) {
+            await insert_form_data(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, user_id)
+        } else {
+            await update_form_data_in_db(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, form_data.form_service_id)
+        }
+
         if (!is_draft) {
+
             // const emails = ['texyslogan@gmail.com', 'texysforms1@gmail.com', 'krakka37@gmail.com', 'amitcarpenter.ctinfotech@gmail.com']
-            const emails = ['amitcarpenter.ctinfotech@gmail.com']
+            const emails = ['amitcarpenter.ctinfotech@gmail.com' , 'mayank.ctinfotech@gmail.com']
 
             let pdf_link = ''
             if (req.file) {
@@ -79,15 +90,8 @@ export const add_update_form_data = async (req, res) => {
                     await sendEmail(emailOptions);
                 })
             )
+            const delete_form_data_row = await delete_form_data(user_id)
 
-        }
-
-        const [form_data] = await get_form_data_by_user_id(user_id)
-
-        if (!form_data) {
-            await insert_form_data(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, user_id)
-        } else {
-            await update_form_data_in_db(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, form_data.form_service_id)
         }
 
         return handleSuccess(res, 200, response_message)
