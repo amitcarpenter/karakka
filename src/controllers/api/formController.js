@@ -84,7 +84,7 @@ export const add_update_form_data = async (req, res) => {
                 emails.map(async (email) => {
                     const emailOptions = {
                         to: email,
-                        subject: "Karkka Form Data PDF",
+                        subject: "Krakka Form Data PDF",
                         html: emailHtml,
                     };
                     await sendEmail(emailOptions);
