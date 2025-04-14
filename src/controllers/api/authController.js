@@ -81,7 +81,7 @@ export const register = async (req, res) => {
         const emailHtml = await ejs.renderFile(emailTemplatePath, { verificationLink, image_logo });
         const emailOptions = {
             to: email,
-            subject: "Password Reset Request",
+            subject: "Account Verification Email",
             html: emailHtml,
         };
         await sendEmail(emailOptions);
