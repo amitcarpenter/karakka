@@ -36,7 +36,6 @@ const sslOptions = {
   key: fs.readFileSync("/var/www/html/ssl/private.key"),
   cert: fs.readFileSync("/var/www/html/ssl/certificate.crt"),
 };
-// Create HTTPS server
 const httpsServer = https.createServer(sslOptions, app);
 
 httpsServer.listen(PORT, () => {
