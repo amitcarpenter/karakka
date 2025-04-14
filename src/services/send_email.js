@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async ({ to, subject, html }) => {
     const mailOptions = {
-        from: EMAIL_USER,
+        from: `krakka <${process.env.EMAIL_USER}>`, 
         to,
         subject,
         html,
