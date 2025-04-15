@@ -10,9 +10,16 @@ const storage = multer.diskStorage({
         cb(null, path.join(__dirname, '../uploads/')); 
     },
     filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`); 
+        cb(null, `${file.originalname}`); 
     },
 });
 
 export const upload = multer({ storage: storage });
 export const uploadFile = upload.single('file');
+export const uploadXML = upload.single('xml');
+
+export const uploadFormFiles = upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'xml', maxCount: 1 },
+  ]);
+  

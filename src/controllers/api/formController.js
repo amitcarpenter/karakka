@@ -52,34 +52,41 @@ export const add_update_form_data = async (req, res) => {
         console.log(user_id, "user_id");
 
         let pdf_file = ""
-        if (req.file) {
-            pdf_file = req.file.filename
+        let xml_file = ""
+        if (req.files) {
+            // pdf_file = req.file.filename
+            pdf_file = req.files['file']?.[0].filename;
+            xml_file = req.files['xml']?.[0].filename;
         }
 
         let response_message = is_draft ? 'Form Data Saved in Draft Successfully' : 'Form Data Submitted Successfully'
 
-
-
         const [form_data] = await get_form_data_by_user_id(user_id)
 
         if (!form_data) {
-            await insert_form_data(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, user_id)
+            await insert_form_data(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, xml_file, user_id)
         } else {
-            await update_form_data_in_db(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, form_data.form_service_id)
+            await update_form_data_in_db(describe_of_land, treatment_plant_details, treatment_plant_status, land_application_area, tests_to_be_completed_every_service, annual_testing, service_procedure, owners_details, service_technician_details, declaration, pdf_file, xml_file, form_data.form_service_id)
         }
 
         if (!is_draft) {
-
-            const emails = ['texyslogan@gmail.com', 'texysforms1@gmail.com', 'krakka37@gmail.com']
-            // const emails = ['amitcarpenter.ctinfotech@gmail.com' , 'mayank.ctinfotech@gmail.com']
+            // const emails = ['texyslogan@gmail.com', 'texysforms1@gmail.com', 'krakka37@gmail.com']
+            const emails = ['amitcarpenter.ctinfotech@gmail.com', 'mayank.ctinfotech@gmail.com']
 
             let pdf_link = ''
-            if (req.file) {
-                pdf_link = APP_URL + req.file.filename
+            let xml_link = ''
+            let xml_link_file_name = ''
+            let pdf_link_file_name = ''
+            if (req.files) {
+                pdf_link = APP_URL + req.files['file']?.[0].filename;
+                xml_link = APP_URL + req.files['xml']?.[0].filename;
+                xml_link_file_name = req.files['file']?.[0].filename;
+                pdf_link_file_name = req.files['xml']?.[0].filename;
             }
 
             const emailTemplatePath = path.resolve(__dirname, "../../views/email_pdf.ejs");
-            const emailHtml = await ejs.renderFile(emailTemplatePath, { image_logo, pdf_link });
+            const emailHtml = await ejs.renderFile(emailTemplatePath, { image_logo, pdf_link, xml_link, xml_link_file_name, pdf_link_file_name });
+
             await Promise.all(
                 emails.map(async (email) => {
                     const emailOptions = {
