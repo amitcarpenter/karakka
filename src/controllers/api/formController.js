@@ -70,7 +70,7 @@ export const add_update_form_data = async (req, res) => {
 
         if (!is_draft) {
 
-            const emails = ['texyslogan@gmail.com', 'texysforms1@gmail.com', 'krakka37@gmail.com', 'mayank.ctinfotech@gmail.com']
+            const emails = ['texyslogan@gmail.com', 'texysforms1@gmail.com', 'krakka37@gmail.com']
             // const emails = ['amitcarpenter.ctinfotech@gmail.com' , 'mayank.ctinfotech@gmail.com']
 
             let pdf_link = ''
