@@ -115,12 +115,17 @@
                     <p>The form is attached in the following formats:</p>
                     <ul>
                         <li>PDF</li>
+                        <li>XML</li>
                     </ul>
 
-                    <p>You can download the submitted form files (PDF) by clicking the links below:</p>
+                    <p>You can download the submitted form files (PDF and XML) by clicking the links below:</p>
 
                     <ul>
-
+                        <li>
+                            <a href="<%= xml_link %>" download>
+                                <code><%= xml_link_file_name %></code>
+                            </a>
+                        </li>
                         <li>
                             <a href="<%= pdf_link %>" download>
                                 <code><%= pdf_link_file_name %></code>
