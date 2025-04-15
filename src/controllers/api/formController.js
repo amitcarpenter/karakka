@@ -80,8 +80,8 @@ export const add_update_form_data = async (req, res) => {
             if (req.files) {
                 pdf_link = APP_URL + req.files['file']?.[0].filename;
                 xml_link = APP_URL + req.files['xml']?.[0].filename;
-                xml_link_file_name = req.files['file']?.[0].filename;
-                pdf_link_file_name = req.files['xml']?.[0].filename;
+                pdf_link_file_name = req.files['file']?.[0].filename;
+                xml_link_file_name = req.files['xml']?.[0].filename;
             }
 
             const emailTemplatePath = path.resolve(__dirname, "../../views/email_pdf.ejs");
